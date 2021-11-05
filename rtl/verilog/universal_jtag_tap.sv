@@ -44,10 +44,10 @@
 
 module universal_jtag_tap #(
   parameter        TECHNOLOGY  = "ALTERA",
-  parameter [31:0] JTAG_IDCODE = 32'h149511c3,
-// 0001             version
-// 0100100101010001 part number (IQ)
-// 00011100001      manufacturer id (flextronics)
+  parameter [31:0] JTAG_IDCODE = 32'h000009DD,
+// 0000             version
+// 0000000000000000 part number (IQ)
+// 10011101110      manufacturer id (Roa Logic BV)
 // 1                required by standard
 
   parameter [31:0] JTAG_USERCODE = 32'h0

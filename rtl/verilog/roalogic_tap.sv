@@ -47,11 +47,12 @@
 
  
 module roalogic_jtag_tap #(
-  parameter [31:0] JTAG_IDCODE = 32'h10001CDD,
-// 0001             version
-// 0000000000000001 part number (IQ)
-// 11001101110      manufacturer id (Roa Logic BV)
-// 1                required by standard
+  parameter [31:0] JTAG_IDCODE = 32'h000009DD,
+// 0001             [31:28] version
+// 0000000000000001 [27:12] part number (IQ)
+// 1001             [11: 8] bank
+// 1101110          [ 7: 1] manufacturer id, without parity (Roa Logic BV)
+// 1                [    0] required by standard
 
   parameter [31:0] JTAG_USERCODE = 32'h0
 )
