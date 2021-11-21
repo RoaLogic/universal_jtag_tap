@@ -70,7 +70,7 @@ module roalogic_jtag_tap #(
 
 
   //JTAG states relevant for debugging
-  output     tap_TestLogicReset,
+  output reg tap_TestLogicReset,
              tap_CaptureDR,
              tap_ShiftDR,
              tap_PauseDR,
@@ -158,29 +158,89 @@ module roalogic_jtag_tap #(
   assign dbg_tdi = jtag_tdi;
 
 
-
   /*
    * TAP Controller State Machine (Section 6. Figure 6.1)
    */
   always @(posedge jtag_tck,negedge tap_resetn)
-    if (!tap_resetn) tap_state <= TestLogicReset;
+    if (!tap_resetn)
+    begin
+        tap_state          <= TestLogicReset;
+	tap_TestLogicReset <= 1'b1;
+	tap_CaptureDR      <= 1'b0;
+	tap_ShiftDR        <= 1'b0;
+	tap_PauseDR        <= 1'b0;
+	tap_UpdateDR       <= 1'b0;
+    end
     else
       case (tap_state)
-          TestLogicReset: if (!jtag_tms) tap_state <= RunTestIdle;
+          TestLogicReset: if (!jtag_tms)
+                          begin
+                              tap_state          <= RunTestIdle;
+			      tap_TestLogicReset <= 1'b0;
+                          end
           RunTestIdle   : if ( jtag_tms) tap_state <= SelectDRScan;
           SelectDRScan  : if ( jtag_tms) tap_state <= SelectIRScan;
-                          else           tap_state <= CaptureDR;
-          CaptureDR     : if (!jtag_tms) tap_state <= ShiftDR;
-                          else           tap_state <= Exit1DR;
-          ShiftDR       : if ( jtag_tms) tap_state <= Exit1DR;
-          Exit1DR       : if (!jtag_tms) tap_state <= PauseDR;
-                          else           tap_state <= UpdateDR;
-          PauseDR       : if ( jtag_tms) tap_state <= Exit2DR;
-          Exit2DR       : if ( jtag_tms) tap_state <= UpdateDR;
-                          else           tap_state <= ShiftDR;
-          UpdateDR      : if ( jtag_tms) tap_state <= SelectDRScan;
-                          else           tap_state <= RunTestIdle;
-          SelectIRScan  : if ( jtag_tms) tap_state <= TestLogicReset;
+                          else
+                          begin
+                              tap_state     <= CaptureDR;
+			      tap_CaptureDR <= 1'b1;
+                          end
+          CaptureDR     : if (!jtag_tms)
+                          begin
+                              tap_state     <= ShiftDR;
+                              tap_CaptureDR <= 1'b0;
+                              tap_ShiftDR   <= 1'b1;
+                          end
+                          else
+                          begin
+                              tap_state     <= Exit1DR;
+                              tap_CaptureDR <= 1'b0;
+                          end
+          ShiftDR       : if ( jtag_tms)
+                          begin
+                              tap_state   <= Exit1DR;
+                              tap_ShiftDR <= 1'b0;
+                          end
+          Exit1DR       : if (!jtag_tms)
+                          begin
+                              tap_state   <= PauseDR;
+                              tap_PauseDR <= 1'b1;
+                          end
+                          else
+                          begin
+                              tap_state    <= UpdateDR;
+                              tap_UpdateDR <= 1'b1;
+                          end
+          PauseDR       : if ( jtag_tms)
+                          begin
+                              tap_state   <= Exit2DR;
+                              tap_PauseDR <= 1'b0;
+                          end
+          Exit2DR       : if ( jtag_tms)
+                          begin
+                              tap_state    <= UpdateDR;
+                              tap_UpdateDR <= 1'b1;
+                          end
+                          else
+                          begin
+                              tap_state   <= ShiftDR;
+                              tap_ShiftDR <= 1'b1;
+                          end
+          UpdateDR      : if ( jtag_tms)
+                          begin
+                              tap_state    <= SelectDRScan;
+                              tap_UpdateDR <= 1'b0;
+                          end
+                          else
+			  begin
+                              tap_state    <= RunTestIdle;
+                              tap_UpdateDR <= 1'b0;
+                          end
+          SelectIRScan  : if ( jtag_tms)
+                          begin
+                              tap_state          <= TestLogicReset;
+                              tap_TestLogicReset <= 1'b1;
+                          end
                           else           tap_state <= CaptureIR;
           CaptureIR     : if (!jtag_tms) tap_state <= ShiftIR;
                           else           tap_state <= Exit1IR;
@@ -192,17 +252,12 @@ module roalogic_jtag_tap #(
                           else           tap_state <= ShiftIR;
           UpdateIR      : if ( jtag_tms) tap_state <= SelectDRScan;
                           else           tap_state <= RunTestIdle;
-          default       :                tap_state <= TestLogicReset;
+          default       :
+                          begin
+                              tap_state          <= TestLogicReset;
+                              tap_TestLogicReset <= 1'b1;
+                          end
       endcase
-
-
-  //assign states
-  assign tap_TestLogicReset = tap_state == TestLogicReset;
-  assign tap_CaptureDR      = tap_state == CaptureDR;
-  assign tap_ShiftDR        = tap_state == ShiftDR;
-  assign tap_PauseDR        = tap_state == PauseDR;
-  assign tap_UpdateDR       = tap_state == UpdateDR;
-  
 
 
   /*
